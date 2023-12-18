@@ -44,6 +44,43 @@
 
             ---
 
+            ## Bit-vecteurs
+
+            Avant la version 2.5.0 : `extract` et `concat
+
+            Depuis la version 2.5.0 :
+
+              - <!-- .element class="fragment" -->
+                `bvand`, `bvor`, `bvnot`, `bvxor`, ...
+              - <!-- .element class="fragment" -->
+                `bvadd`, `bvsub`, `bvmul`, `bvudiv`, `bvsdiv`, ...
+              - <!-- .element class="fragment" -->
+                `bvult`, `bvule`, `bvslt`, `bvsle`, ...
+              - <!-- .element class="fragment" -->
+                `bv2nat`, `int2bv`
+
+            ---
+
+            ## Types algébriques
+
+            ```rust
+            enum Tree<T> {
+                Empty,
+                Node(T, Box<Tree<T>>, Box<Tree<T>>)
+            }
+            ```
+
+             - Polymorphisme <!-- .element class="fragment" -->
+             - Définition récursive <!-- .element class="fragment" -->
+
+            ---
+
+            ## Séquences
+
+            Thèse CIFRE avec le CEA en cours... stay tuned!
+
+            ---
+
             ## Génération de modèles : Exemple
 
             ```lisp [|1,9|5-7]
@@ -92,19 +129,15 @@
 
             ## Génération de modèles : Bit-vecteurs
 
-            ```lisp [7-12]
-            (set-logic BV)
+            ```lisp [6-8]
+            (set-logic ALL)
             (set-option :produce-models true)
-            (declare-const a (_ BitVec 2))
-            (declare-const b (_ BitVec 3))
-            (declare-const c (_ BitVec 6))
-            (declare-const z (_ BitVec 1))
-            (assert (= ((_ extract 0 0) c) #b1))
-            (assert (= ((_ extract 5 5) c) #b1))
-            (assert (= (concat (concat b z) a) c))
-            (assert (= ((_ extract 1 1) a) #b1))
-            (assert (= ((_ extract 1 0) b) #b11))
-            (assert (= z #b0))
+            (declare-const r (_ BitVec 8))
+            (declare-const l (_ BitVec 8))
+            (declare-const m (_ BitVec 8))
+            (assert (bvule l r))
+            (assert (= m (bvudiv (bvadd l r) (_ bv2 8))))
+            (assert (not (and (bvule l m) (bvule m r))))
             (check-sat)
             (get-model)
             ```
@@ -113,52 +146,52 @@
 
             ## Génération de modèles : Bit-vecteurs
 
-            ```lisp [7:]
-            (assert (= ((_ extract 0 0) c) #b1))
-            (assert (= ((_ extract 5 5) c) #b1))
-            (assert (= (concat (concat b z) a) c))
-            (assert (= ((_ extract 1 1) a) #b1))
-            (assert (= ((_ extract 1 0) b) #b11))
-            (assert (= z #b0))
+            ```lisp [6:]
+            (assert (bvule l r))
+            (assert (= m (bvudiv (bvadd l r) (_ bv2 8))))
+            (assert (not (and (bvule l m) (bvule m r))))
             ```
 
             ```console
             $ alt-ergo input.smt2
             unknown
             (
-              (define-fun z () (_ BitVec 1) #b0)
-              (define-fun a () (_ BitVec 2) #b11)
-              (define-fun b () (_ BitVec 3) #b111)
-              (define-fun c () (_ BitVec 6) #b111011)
+              (define-fun r () (_ BitVec 8) #b11111111)
+              (define-fun l () (_ BitVec 8) #b00000001)
+              (define-fun m () (_ BitVec 8) #b00000000)
             )
             ```
 
             ---
 
-            ## Génération de modèles : BV+Int
+            ## Génération de modèles : ADTs
 
-            ```lisp [4]
-            (set-logic ALL)
+            ```lisp [3,5-6]
             (set-option :produce-models true)
-            (declare-const x (_ BitVec 4))
-            (assert (= (bv2nat x) 7))
+            (set-logic ALL)
+            (declare-datatype Tree (par (T) ((Node (val T) (left (Tree T)) (right (Tree T))) (Empty))))
+            (declare-const t (Tree Int))
+            (assert ((_ is Node) t))
+            (assert (= (left t) Empty))
             (check-sat)
             (get-model)
             ```
 
-            ```console [3]
-            unknown
-            (
-              (define-fun x () (_ BitVec 4) #b0111)
-            )
+            ```console fragment
+            $ alt-ergo input.smt2
+            [Error][ADTs.models] assign_value currently not implemented
+
+            ; Feature not implemented (Models for ADTs)
             ```
+
+            Encore du travail <!-- .element class="fragment" -->
 
             ---
 
             ## Génération de modèles
 
             - Entiers ✅ <!-- .element class="fragment" -->
-            - Rationnels ✅ <!-- .element class="fragment" -->
+            - Réels / rationnels ✅ <!-- .element class="fragment" -->
             - Tableaux ✅ <!-- .element class="fragment" -->
             - Records ✅ <!-- .element class="fragment" -->
             - Énumérations ✅ <!-- .element class="fragment" -->
@@ -252,7 +285,7 @@
             ## Optimisation
 
             - Entiers 🚀 <!-- .element class="fragment" -->
-            - Rationnels 🚀 <!-- .element class="fragment" -->
+            - Réels / rationnels 🚀 <!-- .element class="fragment" -->
             - Bit-vecteurs 👷 <!-- .element class="fragment" -->
 
             ---
@@ -297,6 +330,8 @@
             ## Prochaines versions
 
             - Génération de modèles pour les ADTs
+            - Raisonnement sur les ADTs
+            - Raisonnement sur les bit-vecteurs
             - Optimisation pour les bit-vecteurs
             - Votre problématique ici?
 
