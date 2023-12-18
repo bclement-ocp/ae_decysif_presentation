@@ -1,40 +1,334 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="dist/reset.css">
-		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+    <link rel="stylesheet" href="dist/reset.css">
+    <link rel="stylesheet" href="dist/reveal.css">
+    <link rel="stylesheet" href="dist/theme/moon.css">
 
-		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="plugin/highlight/monokai.css">
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="plugin/highlight/monokai.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h3>Alt-Ergo</h3>
+          <p>
+            Projet Décysif 🏌 - 19 Décembre 2023
+          </p> 
+          <p>
+            <small>Basile Clément, pour l'équipe Alt-Ergo @ OCamlPro</small>
+          </p> 
+        </section>
+        <section data-markdown data-separator-vertical="\r?\n--\r?\n">
+          <textarea data-template>
+            ## Alt-Ergo
 
-		<script src="dist/reveal.js"></script>
-		<script src="plugin/notes/notes.js"></script>
-		<script src="plugin/markdown/markdown.js"></script>
-		<script src="plugin/highlight/highlight.js"></script>
-		<script>
-			// More info about initialization & config:
-			// - https://revealjs.com/initialization/
-			// - https://revealjs.com/config/
-			Reveal.initialize({
-				hash: true,
+            ![Alt-Ergo](altergo-spider-web.png)
 
-				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
-			});
-		</script>
-	</body>
+            ---
+
+            ## Alt-Ergo ∩️ Décysif
+
+            - Bitvecteurs (entiers machine) <!-- .element class="fragment" -->
+            - Types algébriques <!-- .element class="fragment" -->
+            - Séquences <!-- .element class="fragment" -->
+            - Génération de modèles <!-- .element class="fragment" -->
+            - Optimisation (MaxSMT) <!-- .element class="fragment" -->
+            - <!-- .element class="fragment" --> <strong>Votre problématique ici!</strong>
+
+            ---
+
+            ## Génération de modèles : Exemple
+
+            ```lisp [|1,9|5-7]
+            (set-option :produce-models true)
+            (set-logic ALL)
+            (declare-const a Int)
+            (declare-const b Int)
+            (assert (> a 1))
+            (assert (> b 1))
+            (assert (= (* a b) 467149))
+            (check-sat)
+            (get-model)
+            ```
+
+            --
+
+            ## Génération de modèles (CVC5)
+
+            ```lisp [7:]
+            (assert (= (* a b) 467149))
+            ```
+
+            ```console
+            $ cvc5 input.smt2 # 20s
+            cvc5 interrupted by timeout.
+            ```
+
+            --
+
+            ## Génération de modèles (Alt-Ergo)
+
+            ```lisp [7:]
+            (assert (= (* a b) 467149))
+            ```
+
+            ```console
+            $ alt-ergo input.smt2 # 0.3s
+            unknown
+            (
+              (define-fun a () Int 569)
+              (define-fun b () Int 821)
+            )
+            ```
+
+            ---
+
+            ## Génération de modèles : Bit-vecteurs
+
+            ```lisp [7-12]
+            (set-logic BV)
+            (set-option :produce-models true)
+            (declare-const a (_ BitVec 2))
+            (declare-const b (_ BitVec 3))
+            (declare-const c (_ BitVec 6))
+            (declare-const z (_ BitVec 1))
+            (assert (= ((_ extract 0 0) c) #b1))
+            (assert (= ((_ extract 5 5) c) #b1))
+            (assert (= (concat (concat b z) a) c))
+            (assert (= ((_ extract 1 1) a) #b1))
+            (assert (= ((_ extract 1 0) b) #b11))
+            (assert (= z #b0))
+            (check-sat)
+            (get-model)
+            ```
+
+            --
+
+            ## Génération de modèles : Bit-vecteurs
+
+            ```lisp [7:]
+            (assert (= ((_ extract 0 0) c) #b1))
+            (assert (= ((_ extract 5 5) c) #b1))
+            (assert (= (concat (concat b z) a) c))
+            (assert (= ((_ extract 1 1) a) #b1))
+            (assert (= ((_ extract 1 0) b) #b11))
+            (assert (= z #b0))
+            ```
+
+            ```console
+            $ alt-ergo input.smt2
+            unknown
+            (
+              (define-fun z () (_ BitVec 1) #b0)
+              (define-fun a () (_ BitVec 2) #b11)
+              (define-fun b () (_ BitVec 3) #b111)
+              (define-fun c () (_ BitVec 6) #b111011)
+            )
+            ```
+
+            ---
+
+            ## Génération de modèles : BV+Int
+
+            ```lisp [4]
+            (set-logic ALL)
+            (set-option :produce-models true)
+            (declare-const x (_ BitVec 4))
+            (assert (= (bv2nat x) 7))
+            (check-sat)
+            (get-model)
+            ```
+
+            ```console [3]
+            unknown
+            (
+              (define-fun x () (_ BitVec 4) #b0111)
+            )
+            ```
+
+            ---
+
+            ## Génération de modèles
+
+            - Entiers ✅ <!-- .element class="fragment" -->
+            - Rationnels ✅ <!-- .element class="fragment" -->
+            - Tableaux ✅ <!-- .element class="fragment" -->
+            - Records ✅ <!-- .element class="fragment" -->
+            - Énumérations ✅ <!-- .element class="fragment" -->
+            - Bit-vecteurs 🚀 <!-- .element class="fragment" -->
+            - Types algébriques 👷 <!-- .element class="fragment" -->
+            - Fonctions ✅ <!-- .element class="fragment" -->
+            - Fonctions récursives ❌ <!-- .element class="fragment" -->
+
+            ---
+
+            ## Optimisation
+
+            <img class="fragment" src="7seg.jpg" width="300px" alt="Afficheur 7 segments">
+
+            --
+
+            ## Optimisation
+
+            ```lisp [4-5]
+            (set-option :produce-models true)
+            (set-logic ALL)
+            (declare-const x Int)
+            (assert (>= x 0))
+            (assert (distinct x (+ (mod x 10) (* 10 (mod (div x 10) 10)))))
+            (check-sat)
+            (get-model)
+            ```
+
+            ```console fragment
+            $ alt-ergo input.smt2
+            unknown
+            (
+              (define-fun x () Int 200)
+            )
+            ```
+
+            --
+
+            ## Optimisation
+            
+            ```lisp [6]
+            (set-option :produce-models true)
+            (set-logic ALL)
+            (declare-const x Int)
+            (assert (>= x 0))
+            (assert (distinct x (+ (mod x 10) (* 10 (mod (div x 10) 10)))))
+            (minimize x)
+            (check-sat)
+            (get-model)
+            ```
+
+            ```console fragment
+            $ alt-ergo --optimize input.smt2
+            unknown
+            (
+              (define-fun x () Int 100)
+            )
+            ```
+
+            ---
+
+            ## Optimisation
+
+            ```lisp [|7]
+            (set-logic ALL)
+            (set-option :produce-models true)
+            (declare-const x Real)
+            (declare-const y Real)
+            (assert (<= x 17.0))
+            (assert (= (* 5.0 x) (* 2.0 y)))
+            (maximize (+ (* 2.0 x) (* 3.0 y)))
+            (check-sat)
+            (get-model)
+            (get-objectives)
+            ```
+
+            ```console fragment
+            $ alt-ergo --optimize input.smt2
+            unknown
+            (
+              (define-fun x () Real 17.0)
+              (define-fun y () Real (/ 85 2))
+            )
+            (objectives 
+              ((+ (* 2.0 x) (* 3.0 y)) (/ 323 2))
+            )
+            ```
+
+            ---
+
+            ## Optimisation
+
+            - Entiers 🚀 <!-- .element class="fragment" -->
+            - Rationnels 🚀 <!-- .element class="fragment" -->
+            - Bit-vecteurs 👷 <!-- .element class="fragment" -->
+
+            ---
+
+            ## Version 2.5.0
+
+            - Syntaxe SMT-LIB <!-- .element class="fragment" -->
+            - Contre-exemples (dans Why3 1.7.0 🥳) <!-- .element class="fragment" -->
+            - Bit-vecteurs (support préliminaire) <!-- .element class="fragment" -->
+
+            ---
+
+            ## Prochaines versions
+
+            ![MaxSMT, merged](optimae.png)
+            Support de l'optimisation
+
+            --
+
+            ## Prochaines versions
+
+            ![Constant propagation, merged](cpmr.png)
+            Validité des modèles
+
+            --
+
+            ## Prochaines versions
+
+            ![Use Z.t, merged](bvz.png)
+            Meilleures performances sur les bit-vecteurs
+
+            --
+
+            ## Prochaines versions
+
+            ![bvnot support, merged](bvnot.png)
+            ![Word-level propagation for BV logic, merged](bvmr.png)
+            +10% de problèmes résolus sur les bit-vecteurs
+
+            --
+
+            ## Prochaines versions
+
+            - Génération de modèles pour les ADTs
+            - Optimisation pour les bit-vecteurs
+            - Votre problématique ici?
+
+            ---
+
+            ## Alt-Ergo : Résumé
+
+             - Solveur mathématique
+             - Génération de modèles
+             - Optimisation
+             - Travaux en cours : Bit-vecteurs et types algébriques
+             - <a href="https://github.com/OCamlPro/Alt-Ergo">https://github.com/OCamlPro/Alt-Ergo</a>
+
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+      });
+    </script>
+  </body>
 </html>
