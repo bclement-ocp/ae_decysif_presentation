@@ -46,9 +46,9 @@
 
             ## Bit-vecteurs
 
-            Avant la version 2.5.0 : `extract` et `concat
+            Avant la version 2.5.0 : `extract` et `concat`
 
-            Depuis la version 2.5.0 :
+            Depuis la version 2.5.0 : <!-- .element class="fragment" -->
 
               - <!-- .element class="fragment" -->
                 `bvand`, `bvor`, `bvnot`, `bvxor`, ...
@@ -77,7 +77,7 @@
 
             ## Séquences
 
-            Thèse CIFRE avec le CEA en cours... stay tuned!
+            Thèse CIFRE avec le CEA en cours... stay tuned! <!-- .element class="fragment" -->
 
             ---
 
@@ -162,14 +162,20 @@
             )
             ```
 
+            <p class="fragment">
+            Timeout avec <code>(_ BitVec 32)</code>... encore du travail&nbsp;!
+            </p>
+
             ---
 
             ## Génération de modèles : ADTs
 
-            ```lisp [3,5-6]
+            ```lisp [3-5,7-8]
             (set-option :produce-models true)
             (set-logic ALL)
-            (declare-datatype Tree (par (T) ((Node (val T) (left (Tree T)) (right (Tree T))) (Empty))))
+            (declare-datatype Tree (par (T) (
+              (Node (val T) (left (Tree T)) (right (Tree T)))
+              (Empty))))
             (declare-const t (Tree Int))
             (assert ((_ is Node) t))
             (assert (= (left t) Empty))
@@ -184,7 +190,7 @@
             ; Feature not implemented (Models for ADTs)
             ```
 
-            Encore du travail <!-- .element class="fragment" -->
+            Encore du travail! <!-- .element class="fragment" -->
 
             ---
 
@@ -228,7 +234,7 @@
             )
             ```
 
-            --
+            ---
 
             ## Optimisation
             
@@ -251,7 +257,7 @@
             )
             ```
 
-            ---
+            --
 
             ## Optimisation
 
